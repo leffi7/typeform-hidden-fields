@@ -9,7 +9,7 @@ useragent en screen zijn 2 'hidden fields', waarvan de key zelf gekozen wordt, m
 
 Dit javascript probeert de value voor 6 keys te achterhalen:
 * useragent: Omgeving waarin enquete wordt ingevuld: browser of webview geintegreerd in app
-* product: enquete ingevuld via m-site of www-site. Enkel relevant bij 2 aparte producten (vb hln.be) 
+* product: enquete ingevuld via m-site of www-site. Enkel relevant bij 2 aparte producten
 * screen: Schermgrootte waarmee enquete is ingevuld
 * urlsource: Detecteert vanwaar gebruiker kwam
 * pageviews: Telt aantal pageviews tot gebruiker enquete verlaat
