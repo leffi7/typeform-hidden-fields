@@ -1,0 +1,223 @@
+<html>
+<head>
+	<meta charset="UTF-8">     
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+	<title>Typeform Title</title>
+<style type="text/css"> html{ margin: 0; height: 100%; overflow: hidden; } iframe{ position: absolute; left:0; right:0; bottom:0; top:0; border:0; } </style>	
+</head>
+<body>
+	<h1>Het Typeform script</h1>
+
+	<script>
+	function goToUpdatedGetParams(){
+		/*********  ENKEL DIT GEDEELTE AANPASSEN  *********/    
+		
+		// URL naar typeform zonder hidden field parameters
+		var tf_URL = "https://www.typeform.com/to/typeform_id";	
+		
+		// Geef met true aan welke parameters je in deze typeform wil gebruiken.
+		// Neem letterlijke naamgeving over in typeform
+		var hiddenFieldsObj = {
+				useragent: true,		// Omgeving waarin enquete wordt ingevuld: browser of webview geintegreerd in app
+				product: true,			// TF ingevuld via m-site of www-site. Enkel relevant bij 2 aparte producten (vb hln.be) 
+				screen: true,			// Schermgrootte waarmee TF is ingevuld
+				urlsource: true,		// Detecteert vanwaar gebruiker kwam
+				pageviews: true,		// Telt aantal pageviews tot gebruiker site verlaat
+				timeonsite: true		// Houdt bij hoeveel seconden de gebruiker al op site zat
+			};
+
+		var productName	= 'm.domeinnaam.be';	// indien product: true => geef product-url in van mobiele versie
+
+		/*********  HIERONDER NIETS MEER AANPASSEN  *********/ 	
+		
+
+		/*********  START OBJECT VALUE SCRIPTS  *************/
+		var getParamsToUpdate = {},
+			tf_hiddenFieldValue_useragent = "",
+			tf_hiddenFieldValue_product = "",
+			tf_hiddenFieldValue_screen = "",
+			tf_hiddenFieldValue_urlsource = "",
+			tf_hiddenFieldValue_pageviews = "",
+			tf_hiddenFieldValue_timeonsite = "",
+			tf_direct = document.referrer,
+			tf_directElement = document.createElement( 'a' );
+
+			tf_directElement.href = tf_direct;
+
+		
+		// USERAGENT  (key = useragent)
+		if ( hiddenFieldsObj.useragent ){
+			var tf_touchscreen = 'ontouchstart' in document.documentElement, 
+				tf_useragent = navigator.userAgent.toLowerCase(),
+				tf_standalone = navigator.standalone,
+    			tf_safari = /safari/.test( tf_useragent ),
+    			tf_ios = /iphone|ipod|ipad/.test( tf_useragent ),
+    			tf_android = /android/.test( tf_useragent ),
+    			tf_android_webview = /wv/.test( tf_useragent );
+
+			if ( tf_touchscreen ) {
+				if( tf_ios ) {
+				    if ( !tf_standalone && tf_safari ) {
+				        tf_hiddenFieldValue_useragent = "iosBrowser";
+				    }
+				    else if ( tf_standalone && !tf_safari ) {
+				        tf_hiddenFieldValue_useragent = "iosStandalone";
+				    }
+				    else if ( !tf_standalone && !tf_safari ) {
+				        tf_hiddenFieldValue_useragent = "iosWebview";
+				    };
+				}
+				else if ( tf_android ) {
+					if ( tf_android_webview ){
+						tf_hiddenFieldValue_useragent = "androidWebview";
+					}
+					else {
+						tf_hiddenFieldValue_useragent = "androidBrowser";
+					}
+				}
+				else {
+					tf_hiddenFieldValue_useragent = "otherTouchDevice";
+				};
+			}
+			else {
+				tf_hiddenFieldValue_useragent = "desktop";
+			}
+
+			// https://stackoverflow.com/questions/11508463/javascript-set-object-key-by-variable
+			// getParamsToUpdate[tf_hiddenFieldName_1] = tf_hiddenFieldValue_1;
+			// OF
+			// https://stackoverflow.com/questions/1168807/how-can-i-add-a-key-value-pair-to-a-javascript-object
+			Object.assign( getParamsToUpdate, { useragent: tf_hiddenFieldValue_useragent } );
+		}
+
+
+		// PRODUCT (key = product)
+		if( hiddenFieldsObj.product ){
+			tf_hiddenFieldValue_product = "desktop",
+				tf_src_url = document.location.href;
+
+			if ( tf_src_url.toLowerCase().indexOf( productName ) >= 0 ) {
+				tf_hiddenFieldValue_product = "mobile";
+			}
+
+			Object.assign( getParamsToUpdate, { product: tf_hiddenFieldValue_product } );
+		}
+
+
+		// SCREEN (key = screen)
+		if ( hiddenFieldsObj.screen ) {
+			tf_hiddenFieldValue_screen = window.screen.availWidth;
+
+			Object.assign( getParamsToUpdate, { screen: tf_hiddenFieldValue_screen } );
+		}
+
+
+		// URLSOURCE (key = urlsource)
+		if ( hiddenFieldsObj.urlsource ) {
+			if ( tf_direct == "" ) {
+				tf_hiddenFieldValue_urlsource = "directOtherUnknown";
+			}
+			else {
+				tf_hiddenFieldValue_urlsource = localStorage.getItem( "tf_sourceDomain" );
+			}
+
+			Object.assign( getParamsToUpdate, { urlsource: tf_hiddenFieldValue_urlsource } );
+		}
+
+
+		// PAGEVIEWS (key = pageviews)
+		if ( hiddenFieldsObj.pageviews ) {
+			if ( tf_direct == "" ) {
+				tf_hiddenFieldValue_pageviews = 0;
+			}
+			else {
+				tf_hiddenFieldValue_pageviews = localStorage.getItem( "tf_pageviewCounts" );
+			}
+
+			Object.assign( getParamsToUpdate, { pageviews: tf_hiddenFieldValue_pageviews } );
+		}
+
+
+		// TIMEONSITE (key = timeonsite)
+		if ( hiddenFieldsObj.timeonsite ) {
+			if ( tf_direct == "" ) {
+				tf_hiddenFieldValue_timeonsite = 0;
+			}
+			else {
+				tf_hiddenFieldValue_timeonsite = localStorage.getItem( "tf_siteSeconds" );
+			}
+
+			Object.assign( getParamsToUpdate, { timeonsite: tf_hiddenFieldValue_timeonsite });
+		}
+		/*********  END OBJECT VALUE SCRIPTS  *************/
+
+
+
+
+		/*********  START CORE SCRIPT  *******************/
+		// if 1 value of object is true, pass ? to start parameters in url.	
+		var	startParams = '',	
+			atLeastOneParameter = Object.keys( hiddenFieldsObj ).some( k => hiddenFieldsObj[k] );
+	
+		if ( atLeastOneParameter ) {
+			startParams = '?';
+		}
+
+
+		if ( typeof getParamsToUpdate != "object" ) return false;
+
+		getParams = [];
+
+		var searchBuffer;
+		var found;
+
+		console.log( getParamsToUpdate );
+
+		for ( var k in getParamsToUpdate ) { 
+			if ( ! getParamsToUpdate.hasOwnProperty( k ) ) continue;
+
+			key = encodeURIComponent( k );
+			value = encodeURIComponent( getParamsToUpdate[k] );
+
+			searchBuffer = [];
+			found = false;
+
+			//from the end to start...
+			for ( var i = ( getParams.length - 1 ); i >= 0 ; --i ) {
+				searchBuffer = getParams[i].split('=');
+
+				if ( searchBuffer[0] == key ) {
+					//found key!
+					getParams[i] = key + '=' + value;
+					found = true;
+					break;
+				}
+			}
+
+			if( ! found ) getParams.push( key + '=' + value ); 
+		}
+
+		//THIS WILL TRIGGER BROWSER NAVIGATION ! (browser navigation/reload)
+		// data-url version
+		// document.getElementById("typeform-id").dataset.url = tf_URL + startParams + getParams.join('&');
+		
+		// iframe version
+		document.getElementById( "typeform-full" ).src = tf_URL + startParams + getParams.join( '&' );
+
+		console.log( tf_URL + startParams + getParams.join( '&' ) );
+	}
+	</script>
+
+	<!-- data-url methode -->
+	<!--div id="typeform-id" class="typeform-widget" data-url="" style="width: 100%; height: 100%;"></div> <script> (function() { var qs,js,q,s,d=document, gi=d.getElementById, ce=d.createElement, gt=d.getElementsByTagName, id="typef_orm", b="https://embed.typeform.com/"; if(!gi.call(d,id)) { js=ce.call(d,"script"); js.id=id; js.src=b+"embed.js"; q=gt.call(d,"script")[0]; q.parentNode.insertBefore(js,q) } })() </script-->	
+	<iframe id="typeform-full" width="100%" height="100%" frameborder="0" src=""></iframe> <script type="text/javascript" src="https://embed.typeform.com/embed.js"></script>
+
+	<script>
+		document.addEventListener( "DOMContentLoaded", function() {
+			// https://stackoverflow.com/questions/486896/adding-a-parameter-to-the-url-with-javascript
+			// https://jsfiddle.net/1u9fqad3/1/ 			
+			goToUpdatedGetParams();				
+		} ); 
+	</script>	
+</body>
+</html>

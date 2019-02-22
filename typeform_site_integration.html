@@ -1,0 +1,96 @@
+<html>
+<head>
+	<meta charset="UTF-8">     
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+	<title>Typeform Title</title>
+</head>
+
+<body>
+	<h1>PAGEVIEWS SITE INTEGRATION<h1>
+	<p>Integreer dit scriptje (wat tussen < script >< /script > staat) overal in de site als je pageviews, time on site en/of referrer (waar kwam bezoeker vandaan otoen hij deze site binnenkwam) wil testen.</p>
+	ToDo:
+	<ul>
+		<li>implementatie pageviews: moet blijven optellen en resetten als site verlaten wordt</li>
+		<li>implementatie time on site: moet blijven optellen en resetten als site verlaten wordt</li>
+		<li>implementatie document.referrer: mag niet wijzigen doorheen bezoek site en resetten als site verlaten wordt</li>
+	</ul>
+	<a href="http://127.0.0.1:35729/typeform.html">DOE DE TEST</a>	
+		
+	<script>
+		function tf_setHiddenFields() {
+			var tf_sourceDomain = document.referrer,
+				tf_currentDomain = window.location.hostname,
+				tf_sourceDomainElement = document.createElement( 'a' ),
+				tf_currentDomainElement = document.createElement( 'a' ),
+				tf_hiddenFieldValue_sourceDomain = "";
+				tf_hiddenFieldValue_pageviews = localStorage.getItem( "tf_pageviewCounts" ),
+				tf_hiddenFieldValue_timeOnSite = "";		
+
+				tf_sourceDomainElement.href = tf_sourceDomain;
+				tf_currentDomainElement.href = tf_currentDomain;
+
+
+				//console.log("referrer: " + tf_sourceDomain);
+				//console.log("source: " + tf_sourceDomainElement.hostname);
+				//console.log("current: " + tf_currentDomainElement.hostname);
+
+
+				// RESET (https://stackoverflow.com/questions/6880659/in-what-cases-will-http-referer-be-empty)
+				// NO RESET ON REFRESH (performance.navigation.type)
+				if ( ( performance.navigation.type != 1 && ( tf_sourceDomain == "" || tf_sourceDomainElement.hostname != tf_currentDomainElement.hostname ) ) || tf_sourceDomain == null ) {
+					console.log( 'reset' );
+
+					// SOURCEDOMAIN
+					if ( tf_sourceDomain == "" ) {
+						tf_hiddenFieldValue_sourceDomain = "direct/other/unknown";
+					}
+
+					if ( tf_sourceDomainElement.hostname != tf_currentDomainElement.hostname ) {
+						tf_hiddenFieldValue_sourceDomain = tf_sourceDomainElement.hostname;	
+					}
+
+					// PAGEVIEWS
+					tf_hiddenFieldValue_pageviews = 0;
+						
+
+					// TIME ON SITE	 			
+					tf_hiddenFieldValue_timeOnSite = 0;					
+				}
+
+				// GEEN RESET want binnen de site aan het surfen
+				else {
+					console.log( 'geen reset' );
+
+					// SOURCEDOMAIN
+					tf_hiddenFieldValue_sourceDomain = localStorage.getItem( "tf_sourceDomain" );
+
+					// PAGEVIEWS
+					tf_hiddenFieldValue_pageviews = localStorage.getItem( "tf_pageviewCounts" );
+
+
+					// TIME ON SITE	 
+					tf_hiddenFieldValue_timeOnSite = localStorage.getItem( "tf_siteSeconds" );
+
+				}
+
+				// SOURCEDOMAIN
+				localStorage.setItem( "tf_sourceDomain", tf_hiddenFieldValue_sourceDomain );	
+
+				// PAGEVIEWS
+				localStorage.setItem( "tf_pageviewCounts", Number( tf_hiddenFieldValue_pageviews ) + 1 );
+
+
+				// TIME ON SITE
+				setInterval( function() {
+					++tf_hiddenFieldValue_timeOnSite;
+					localStorage.setItem( "tf_siteSeconds", tf_hiddenFieldValue_timeOnSite );				
+				}, 1000 );
+		}
+
+		// EXECUTE SCRIPT ONLOAD
+		document.addEventListener( "DOMContentLoaded", function() {			
+			tf_setHiddenFields();
+		} );
+	</script>
+</body>
+</html>
